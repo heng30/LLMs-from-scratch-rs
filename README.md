@@ -1,4 +1,4 @@
-使用Rust实现LLMs-from-scratch (https://github.com/rasbt/LLMs-from-scratch.git)
+使用Rust实现[LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch.git)
 
 ## 测试
 - `cargo test test_vocab -- --nocapture`
