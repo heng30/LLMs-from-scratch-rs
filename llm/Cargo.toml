@@ -1,0 +1,9 @@
+[package]
+name = "llm"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+jieba-rs.workspace = true
+tiktoken-rs.workspace = true

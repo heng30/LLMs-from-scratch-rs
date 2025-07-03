@@ -1,0 +1,49 @@
+[workspace]
+exclude = []
+resolver = "2"
+members = ["llm"]
+# members = ["llm", "lib/"]
+
+[workspace.package]
+license = "MIT"
+edition = "2024"
+version = "0.1.0"
+readme = "README.md"
+authors = ["Heng30 <rongheng30@gmail.com>"]
+keywords = ["Rust", "Deep Learning", "Demo"]
+homepage = "https://github.com/Heng30/llms-from-scratch-rs"
+repository = "https://github.com/Heng30/llms-from-scratch-rs"
+description = "Implements llms-from-scratch in Rust"
+
+[profile.dev]
+debug = "full"
+incremental = true
+
+[profile.release]
+lto = true
+strip = true
+debug = false
+panic = "abort"
+opt-level = "s"
+codegen-units = 1
+incremental = true
+
+[workspace.dependencies]
+anyhow = "1.0"
+jieba-rs = "0.7"
+tiktoken-rs = "0.7"
+
+# regex = "1.11"
+# tar = "0.4"
+# csv = "1.3"
+# tch = "0.20"
+# tokio = "1.45"
+# image = "0.25"
+# flate2 = "1.1"
+# approx = "0.5"
+# reqwest = "0.12"
+# ndarray = "0.16"
+# plotters = "0.3"
+# tokio-stream = "0.1"
+# ndarray-rand = "0.15"
+# mylib = { path = "lib" }
