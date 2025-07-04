@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use jieba_rs::Jieba;
 use std::collections::{HashMap, HashSet};
 use tiktoken_rs::{cl100k_base, Rank};
 
 pub const EOF_TOKEN: &str = "<eof>";
-pub const UNKNOWN_TOKEN: &str = "<unk>";
 pub const PADDING_TOKEN: &str = "<pad>";
+pub const UNKNOWN_TOKEN: &str = "<unk>";
 
 #[derive(Debug, Clone)]
 pub enum SentenceType {
@@ -17,7 +17,7 @@ pub enum SentenceType {
 pub struct Vocabulary {
     tokens_to_id: HashMap<String, usize>,
     id_to_tokens: Vec<String>,
-    next_id: usize, // 记录下一个可以添加的下标
+    max_id: usize,
     sentence_type: SentenceType,
 }
 
@@ -27,14 +27,13 @@ impl Vocabulary {
         let mut vocab = Vocabulary {
             tokens_to_id: HashMap::new(),
             id_to_tokens: Vec::new(),
-            next_id: 0,
+            max_id: 0,
             sentence_type,
         };
 
         match vocab.sentence_type {
             SentenceType::English => {
-                let len = vocab.encode_english(text)?.len();
-                vocab.next_id = len;
+                // 在`encode_english`中设置`max_id`
             }
             SentenceType::Chinese => {
                 vocab.add_token(UNKNOWN_TOKEN);
@@ -50,26 +49,27 @@ impl Vocabulary {
     }
 
     pub fn len(&self) -> usize {
-        self.next_id
+        self.max_id
     }
 
-    fn encode(&self, sentence: &str) -> Result<Vec<usize>> {
+    pub fn encode(&mut self, sentence: &str) -> Result<Vec<usize>> {
         match self.sentence_type {
             SentenceType::Chinese => Ok(self.encode_chinese(sentence)),
             SentenceType::English => self.encode_english(sentence),
         }
     }
 
-    fn encode_english(&self, sentence: &str) -> Result<Vec<usize>> {
+    fn encode_english(&mut self, sentence: &str) -> Result<Vec<usize>> {
         let tokenizer = cl100k_base()?;
+        let special: HashSet<&str> = [EOF_TOKEN].into_iter().collect();
+        let token_ids = tokenizer.encode(sentence, &special).0;
 
-        let special: HashSet<&str> = [EOF_TOKEN, PADDING_TOKEN, UNKNOWN_TOKEN]
-            .into_iter()
-            .collect();
+        self.max_id = *token_ids
+            .iter()
+            .max()
+            .with_context(|| "No token in cl100k_base")? as usize;
 
-        Ok(tokenizer
-            .encode(sentence, &special)
-            .0
+        Ok(token_ids
             .into_iter()
             .map(|item| item as usize)
             .collect::<Vec<_>>())
@@ -122,10 +122,10 @@ impl Vocabulary {
         if let Some(&id) = self.tokens_to_id.get(tokens) {
             id
         } else {
-            let id = self.next_id;
+            let id = self.max_id;
             self.tokens_to_id.insert(tokens.to_string(), id);
             self.id_to_tokens.push(tokens.to_string());
-            self.next_id += 1;
+            self.max_id += 1;
             id
         }
     }
@@ -166,12 +166,12 @@ mod tests {
     #[test]
     fn test_vocab() {
         let texts = [
-            ("This is an example.", SentenceType::English),
+            ("This is an example. 这是一个例子。", SentenceType::English),
             ("这是一个例子。", SentenceType::Chinese),
         ];
 
         for item in texts {
-            let vocab = Vocabulary::new(&item.0, item.1).unwrap();
+            let mut vocab = Vocabulary::new(&item.0, item.1).unwrap();
             let token_ids = vocab.encode(&item.0).unwrap();
 
             println!("\ntokens len: {}", vocab.len());

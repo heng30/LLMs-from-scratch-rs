@@ -1,8 +1,7 @@
 [workspace]
 exclude = []
 resolver = "2"
-members = ["llm"]
-# members = ["llm", "lib/"]
+members = ["llm", "lib/*"]
 
 [workspace.package]
 license = "MIT"
@@ -29,9 +28,12 @@ codegen-units = 1
 incremental = true
 
 [workspace.dependencies]
+rand = "0.9"
 anyhow = "1.0"
 jieba-rs = "0.7"
+crossbeam = "0.8"
 tiktoken-rs = "0.7"
+data_loader = { path = "lib/data_loader" }
 
 # regex = "1.11"
 # tar = "0.4"
